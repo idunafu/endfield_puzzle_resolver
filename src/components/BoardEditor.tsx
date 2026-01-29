@@ -14,6 +14,7 @@ type BoardEditorProps = {
 
 const MIN_SIZE = 4;
 const MAX_SIZE = 8;
+const CELL_SIZE = 48;
 
 const CELL_LABEL: Record<CellState, string> = {
   empty: "",
@@ -85,11 +86,11 @@ export default function BoardEditor({
         <div
           className="board-grid__inner"
           style={{
-            gridTemplateColumns: `repeat(${width + 1}, 40px)`,
-            gridTemplateRows: `repeat(${height + 1}, 40px)`,
+            gridTemplateColumns: `repeat(${width + 1}, ${CELL_SIZE}px)`,
+            gridTemplateRows: `repeat(${height + 1}, ${CELL_SIZE}px)`,
           }}
         >
-          <div className="corner-cell" />
+          <div className="corner-cell" style={{ width: CELL_SIZE, height: CELL_SIZE }} />
           {colTargets.map((value, col) => (
             <input
               key={`col-${col}`}
@@ -101,6 +102,7 @@ export default function BoardEditor({
               onChange={(event) =>
                 onColTargetChange(col, Number(event.target.value))
               }
+              style={{ width: CELL_SIZE, height: CELL_SIZE }}
             />
           ))}
           {cells.map((rowCells, row) => (
@@ -114,6 +116,7 @@ export default function BoardEditor({
                 onChange={(event) =>
                   onRowTargetChange(row, Number(event.target.value))
                 }
+                style={{ width: CELL_SIZE, height: CELL_SIZE }}
               />
               {rowCells.map((cell, col) => (
                 <button
@@ -121,6 +124,7 @@ export default function BoardEditor({
                   className={`grid-cell grid-cell--${cell}`}
                   onClick={() => onCellChange(col, row, nextCellState(cell))}
                   type="button"
+                  style={{ width: CELL_SIZE, height: CELL_SIZE }}
                 >
                   {CELL_LABEL[cell]}
                 </button>

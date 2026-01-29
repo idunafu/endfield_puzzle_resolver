@@ -41,12 +41,32 @@ function countCells(grid: boolean[][]) {
   );
 }
 
+const COLORS = [
+  "#ef4444", // red
+  "#f97316", // orange
+  "#f59e0b", // amber
+  "#84cc16", // lime
+  "#22c55e", // green
+  "#10b981", // emerald
+  "#06b6d4", // cyan
+  "#0ea5e9", // sky
+  "#3b82f6", // blue
+  "#6366f1", // indigo
+  "#8b5cf6", // violet
+  "#d946ef", // fuchsia
+  "#f43f5e", // rose
+];
+
+function getRandomColor() {
+  return COLORS[Math.floor(Math.random() * COLORS.length)];
+}
+
 export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("ピース");
   const [count, setCount] = useState(1);
   const [allowRotate, setAllowRotate] = useState(true);
-  const [color, setColor] = useState("#3a7afe");
+  const [color, setColor] = useState(() => getRandomColor());
   const [grid, setGrid] = useState<boolean[][]>(() => createEmptyGrid());
 
   const selectedPiece = useMemo(
@@ -97,7 +117,7 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
     setName("ピース");
     setCount(1);
     setAllowRotate(true);
-    setColor("#3a7afe");
+    setColor(getRandomColor());
     setGrid(createEmptyGrid());
   };
 
@@ -158,7 +178,7 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
               {selectedPiece ? "更新" : "追加"}
             </button>
             <button className="secondary" onClick={handleNew} type="button">
-              新規
+              新規・色変更
             </button>
             <button
               className="danger"
@@ -217,19 +237,19 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
                 <div className="piece-card__meta">
                   {piece.allowRotate ? "回転あり" : "回転なし"}
                 </div>
-                <div className="piece-card__preview">
-                  {piece.cells.map((cell) => (
-                    <span
-                      key={`${piece.id}-${cell.x}-${cell.y}`}
-                      className="piece-card__dot"
-                      style={{
-                        left: cell.x * 8,
-                        top: cell.y * 8,
-                        background: piece.color,
-                      }}
-                    />
-                  ))}
-                </div>
+                  <div className="piece-card__preview">
+                    {piece.cells.map((cell) => (
+                      <span
+                        key={`${piece.id}-${cell.x}-${cell.y}`}
+                        className="piece-card__dot"
+                        style={{
+                          left: cell.x * 12 + 4,
+                          top: cell.y * 12 + 4,
+                          background: piece.color,
+                        }}
+                      />
+                    ))}
+                  </div>
               </button>
             ))}
           </div>
