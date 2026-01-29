@@ -33,12 +33,10 @@ function computeInitialCounts(
   return { row, col };
 }
 
-// 残りピースで各行/列の残り必要数を満たせるかチェック
+// 残りピースで残り必要数を満たせるかチェック
 function canReachTargets(
   rowOcc: number[],
-  colOcc: number[],
   rowTargets: number[],
-  colTargets: number[],
   instances: PieceInstance[],
   startIndex: number,
 ): boolean {
@@ -140,7 +138,7 @@ export function solvePuzzle(
     if (solutions.length >= maxSolutions) return;
 
     // 枝刈り: 残りピースで残り必要数を満たせるかチェック
-    if (!canReachTargets(rowOcc, colOcc, puzzle.rowTargets, puzzle.colTargets, instances, index)) {
+    if (!canReachTargets(rowOcc, puzzle.rowTargets, instances, index)) {
       return;
     }
 

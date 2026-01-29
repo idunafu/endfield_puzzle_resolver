@@ -263,7 +263,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <h1>ポリオミノ敷き詰めパズル</h1>
+        <h1>アークナイツ：エンドフィールドの修理パズルを解くやつ</h1>
         <p>盤面条件とピースを作成して探索します。</p>
       </header>
       <main className="app__main">
