@@ -4,9 +4,15 @@ import type { PieceDef } from "../model/types";
 type PieceBuilderProps = {
   pieces: PieceDef[];
   onChange: (pieces: PieceDef[]) => void;
+  onReset: () => void;
 };
 
-const GRID_SIZE = 6;
+const GRID_SIZE = 8;
+
+function safeParseInt(value: string, fallback: number): number {
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? fallback : parsed;
+}
 
 function createEmptyGrid() {
   return Array.from({ length: GRID_SIZE }, () =>
@@ -41,6 +47,38 @@ function countCells(grid: boolean[][]) {
   );
 }
 
+// ピースが連結しているかチェック (BFS)
+function isConnected(cells: { x: number; y: number }[]): boolean {
+  if (cells.length <= 1) return true;
+
+  const cellSet = new Set(cells.map((c) => `${c.x},${c.y}`));
+  const visited = new Set<string>();
+  const queue = [cells[0]];
+  visited.add(`${cells[0].x},${cells[0].y}`);
+
+  const directions = [
+    { dx: 1, dy: 0 },
+    { dx: -1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 0, dy: -1 },
+  ];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const { dx, dy } of directions) {
+      const nx = current.x + dx;
+      const ny = current.y + dy;
+      const key = `${nx},${ny}`;
+      if (cellSet.has(key) && !visited.has(key)) {
+        visited.add(key);
+        queue.push({ x: nx, y: ny });
+      }
+    }
+  }
+
+  return visited.size === cells.length;
+}
+
 const COLORS = [
   "#ef4444", // red
   "#f97316", // orange
@@ -61,13 +99,14 @@ function getRandomColor() {
   return COLORS[Math.floor(Math.random() * COLORS.length)];
 }
 
-export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
+export default function PieceBuilder({ pieces, onChange, onReset }: PieceBuilderProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("ピース");
   const [count, setCount] = useState(1);
   const [allowRotate, setAllowRotate] = useState(true);
   const [color, setColor] = useState(() => getRandomColor());
   const [grid, setGrid] = useState<boolean[][]>(() => createEmptyGrid());
+  const [error, setError] = useState<string | null>(null);
 
   const selectedPiece = useMemo(
     () => pieces.find((piece) => piece.id === editingId) ?? null,
@@ -75,8 +114,11 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
   );
 
   const cellCount = countCells(grid);
+  const cells = useMemo(() => gridToCells(grid), [grid]);
+  const connected = useMemo(() => isConnected(cells), [cells]);
 
   const handleToggleCell = (x: number, y: number) => {
+    setError(null);
     setGrid((prev) => {
       const copy = prev.map((row) => row.slice());
       copy[y][x] = !copy[y][x];
@@ -85,8 +127,12 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
   };
 
   const handleSave = () => {
-    const cells = gridToCells(grid);
     if (cells.length === 0) return;
+    if (!connected) {
+      setError("ピースが連結していません。全てのセルが隣接している必要があります。");
+      return;
+    }
+    setError(null);
     if (selectedPiece) {
       onChange(
         pieces.map((piece) =>
@@ -101,7 +147,13 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
         ...pieces,
         { id, name, count, allowRotate, color, cells },
       ]);
-      setEditingId(id);
+      // 追加後、すぐに次のピースを編集できるように新規状態にリセット
+      setEditingId(null);
+      setName("ピース");
+      setCount(1);
+      setAllowRotate(true);
+      setColor(getRandomColor());
+      setGrid(createEmptyGrid());
     }
   };
 
@@ -119,6 +171,7 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
     setAllowRotate(true);
     setColor(getRandomColor());
     setGrid(createEmptyGrid());
+    setError(null);
   };
 
   const handleSelect = (piece: PieceDef) => {
@@ -148,7 +201,7 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
               min={1}
               value={count}
               onChange={(event) =>
-                setCount(Math.max(1, Number(event.target.value)))
+                setCount(Math.max(1, safeParseInt(event.target.value, 1)))
               }
             />
           </label>
@@ -168,6 +221,12 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
               onChange={(event) => setColor(event.target.value)}
             />
           </label>
+          {error && (
+            <div className="piece-builder__error">{error}</div>
+          )}
+          {!connected && cellCount > 1 && !error && (
+            <div className="piece-builder__warning">セルが連結していません</div>
+          )}
           <div className="piece-builder__actions">
             <button
               className="primary"
@@ -216,7 +275,17 @@ export default function PieceBuilder({ pieces, onChange }: PieceBuilderProps) {
       </div>
 
       <div className="piece-builder__list">
-        <div className="piece-builder__list-title">登録済みピース</div>
+        <div className="piece-builder__list-header">
+          <div className="piece-builder__list-title">登録済みピース</div>
+          <button
+            className="secondary btn-small"
+            type="button"
+            onClick={onReset}
+            disabled={pieces.length === 0}
+          >
+            全削除
+          </button>
+        </div>
         {pieces.length === 0 ? (
           <div className="piece-builder__empty">まだピースがありません。</div>
         ) : (

@@ -154,6 +154,20 @@ export default function App() {
     });
   };
 
+  const handleBoardReset = () => {
+    setCells(createCells(width, height));
+    setRowTargets(createTargets(height));
+    setColTargets(createTargets(width));
+    setSolutions([]);
+    setActiveSolutionIndex(0);
+  };
+
+  const handlePiecesReset = () => {
+    setPieces([]);
+    setSolutions([]);
+    setActiveSolutionIndex(0);
+  };
+
   useEffect(() => {
     const worker = new Worker(new URL("./solver/worker.ts", import.meta.url), {
       type: "module",
@@ -190,6 +204,8 @@ export default function App() {
       }
     };
     return () => {
+      // クリーンアップ時に停止メッセージを送ってから終了
+      worker.postMessage({ type: "stop" });
       worker.terminate();
     };
   }, []);
@@ -264,6 +280,7 @@ export default function App() {
               onCellChange={handleCellChange}
               onRowTargetChange={handleRowTargetChange}
               onColTargetChange={handleColTargetChange}
+              onReset={handleBoardReset}
             />
             <div className="validation">
               <div className="validation__title">入力チェック</div>
@@ -271,8 +288,8 @@ export default function App() {
                 <div className="validation__ok">問題ありません。</div>
               ) : (
                 <ul className="validation__list">
-                  {validation.map((error) => (
-                    <li key={error}>{error}</li>
+                  {validation.map((error, index) => (
+                    <li key={`error-${index}`}>{error}</li>
                   ))}
                 </ul>
               )}
@@ -285,7 +302,7 @@ export default function App() {
         <section className="panel panel--right">
           <h2>ピースビルダー</h2>
           <div className="panel__content">
-            <PieceBuilder pieces={pieces} onChange={setPieces} />
+            <PieceBuilder pieces={pieces} onChange={setPieces} onReset={handlePiecesReset} />
             <SolutionViewer
               width={width}
               height={height}

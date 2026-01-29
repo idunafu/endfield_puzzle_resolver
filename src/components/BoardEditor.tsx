@@ -10,11 +10,17 @@ type BoardEditorProps = {
   onCellChange: (x: number, y: number, next: CellState) => void;
   onRowTargetChange: (row: number, value: number) => void;
   onColTargetChange: (col: number, value: number) => void;
+  onReset: () => void;
 };
 
 const MIN_SIZE = 4;
 const MAX_SIZE = 8;
 const CELL_SIZE = 48;
+
+function safeParseInt(value: string, fallback: number): number {
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? fallback : parsed;
+}
 
 const CELL_LABEL: Record<CellState, string> = {
   empty: "",
@@ -38,6 +44,7 @@ export default function BoardEditor({
   onCellChange,
   onRowTargetChange,
   onColTargetChange,
+  onReset,
 }: BoardEditorProps) {
   return (
     <div className="board-editor">
@@ -50,7 +57,7 @@ export default function BoardEditor({
             max={MAX_SIZE}
             value={width}
             onChange={(event) =>
-              onResize(Number(event.target.value), height)
+              onResize(safeParseInt(event.target.value, width), height)
             }
           />
         </label>
@@ -62,10 +69,13 @@ export default function BoardEditor({
             max={MAX_SIZE}
             value={height}
             onChange={(event) =>
-              onResize(width, Number(event.target.value))
+              onResize(width, safeParseInt(event.target.value, height))
             }
           />
         </label>
+        <button className="secondary btn-small" type="button" onClick={onReset}>
+          盤面リセット
+        </button>
         <div className="legend">
           <span className="legend__item">
             <span className="legend__chip legend__chip--empty" />
@@ -100,7 +110,7 @@ export default function BoardEditor({
               max={height}
               value={value}
               onChange={(event) =>
-                onColTargetChange(col, Number(event.target.value))
+                onColTargetChange(col, safeParseInt(event.target.value, 0))
               }
               style={{ width: CELL_SIZE, height: CELL_SIZE }}
             />
@@ -114,7 +124,7 @@ export default function BoardEditor({
                 max={width}
                 value={rowTargets[row]}
                 onChange={(event) =>
-                  onRowTargetChange(row, Number(event.target.value))
+                  onRowTargetChange(row, safeParseInt(event.target.value, 0))
                 }
                 style={{ width: CELL_SIZE, height: CELL_SIZE }}
               />
